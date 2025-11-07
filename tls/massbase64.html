@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="robots" content="noindex, follow">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>📦 Массовый BASE64 - Информатор</title>
+  <style>
+    body {
+      background: #add8e6;
+      font-family: sans-serif;
+      padding: 20px;
+      text-align: center;
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: start;
+      align-items: center;
+    }
+    h1 {
+      margin-bottom: 6px;
+    }
+    #desc {
+      font-size: 14px;
+      margin-bottom: 20px;
+      color: #333;
+      max-width: 320px;
+    }
+    #plus-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    #plus-label {
+      width: 80px;
+      height: 80px;
+      font-size: 40px;
+      line-height: 80px;
+      border: 2px dashed #777;
+      background: #fff;
+      border-radius: 12px;
+      color: #666;
+      cursor: pointer;
+      user-select: none;
+    }
+    #count {
+      font-size: 24px;
+      color: #000;
+      min-width: 40px;
+    }
+    input[type="file"] {
+      display: none;
+    }
+    #generate-btn {
+      margin-top: 12px;
+      padding: 10px 18px;
+      font-size: 16px;
+      font-weight: bold;
+      background: #1588;
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.2s ease;
+    }
+    #generate-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    #upload-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    #upload-label {
+      width: 80px;
+      height: 80px;
+      font-size: 40px;
+      line-height: 80px;
+      border: 2px dashed #777;
+      background: #fff;
+      border-radius: 12px;
+      color: #666;
+      cursor: pointer;
+      user-select: none;
+    }
+    #status {
+      font-size: 14px;
+      margin-top: 5px;
+      font-weight: bold;
+      min-height: 20px;
+    }
+    #decode-btn {
+      margin-top: 12px;
+      padding: 10px 18px;
+      font-size: 16px;
+      font-weight: bold;
+      background: #1588;
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.2s ease;
+    }
+    #decode-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    #gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 10px;
+      margin-top: 20px;
+      width: 100%;
+      max-width: 800px;
+    }
+    .image-item {
+      position: relative;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+      min-height: 120px;
+    }
+    .image-item img {
+      width: 100%;
+      height: 120px;
+      object-fit: contain;
+    }
+    .image-name {
+      font-size: 11px;
+      padding: 4px;
+      background: rgba(0,0,0,0.7);
+      color: white;
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      text-align: center;
+      word-break: break-all;
+    }
+    .image-error {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 120px;
+      color: #ff4444;
+      font-size: 12px;
+      text-align: center;
+      padding: 10px;
+    }
+    #reset-btn {
+      margin-top: 10px;
+      padding: 8px 16px;
+      font-size: 14px;
+      background: #ff4444;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .debug-info {
+      font-size: 10px;
+      color: #666;
+      margin-top: 5px;
+    }
+    hr {
+      width: 100%;
+      max-width: 800px;
+      margin: 40px 0;
+      border: none;
+      border-top: 2px solid #777;
+    }
+
+    /* Инструкция - исправленная позиция */
+    .instructions-container {
+      width: 100%;
+      max-width: 800px;
+      margin: 20px 0;
+    }
+
+    details {
+      width: 100%;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background: white;
+    }
+    
+    details summary {
+      padding: 12px 15px;
+      cursor: pointer;
+      font-weight: 600;
+      background: #f5f5f5;
+      border-bottom: 1px solid #ddd;
+    }
+    
+    details[open] summary {
+      border-bottom: 1px solid #ddd;
+    }
+    
+    details ol, details ul {
+      padding: 15px 30px;
+    }
+    
+    details li {
+      margin: 8px 0;
+    }
+
+    /* Языковой переключатель - шире */
+    .lang-container {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      display: flex;
+      gap: 5px;
+      z-index: 101;
+    }
+    
+    .lang {
+      width: 40px;
+      height: 30px;
+      overflow: hidden;
+      font-size: 24px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    
+    .lang:hover {
+      background: #f0f0f0;
+    }
+    
+    .lang.active {
+      border: 2px solid #4a76a8;
+    }
+  </style>
+</head>
+<body>
+  <!-- Верхняя часть - Siperbase64 -->
+  <h1 data-i18n="massTitle">📦 Массовый BASE64</h1>
+  <div id="desc" data-i18n="massDesc">Вставьте фото, чтобы создать .txt-файл с base64</div>
+
+  <div id="plus-container">
+    <label id="plus-label" for="file-input" tabindex="0" aria-label="Добавить файлы">＋</label>
+    <div id="count">0</div>
+  </div>
+
+  <input type="file" id="file-input" multiple accept="image/*" />
+
+  <button id="generate-btn" disabled data-i18n="createBase64">СОЗДАТЬ БАЗ64 В txt</button>
+
+  <hr>
+
+  <!-- Нижняя часть - Infomass64 -->
+  <h1 data-i18n="infoMassTitle">📦 Информатор массового BASE64</h1>
+  <div id="desc" data-i18n="infoMassDesc">Загрузите .txt файл с несколькими base64.</div>
+
+  <div id="upload-container">
+    <label id="upload-label" for="file-input2" tabindex="0" aria-label="Загрузить файл">📁</label>
+  </div>
+
+  <input type="file" id="file-input2" accept=".txt" />
+
+  <div id="status"></div>
+
+  <button id="decode-btn" disabled data-i18n="decodeBase64">РАСШИФРОВАТЬ BASE64</button>
+  
+  <div id="gallery"></div>
+  
+  <button id="reset-btn" style="display:none;" data-i18n="reset">🔄 Сбросить</button>
+
+  <!-- Инструкция - ПЕРЕМЕЩЕНА ВНИЗ -->
+  <div class="instructions-container">
+    <details>
+      <summary><h3 data-i18n="instructionTitle">Инструкция по использованию Массового BASE64</h3></summary>
+      <ol>
+        <li data-i18n="instruction1">В верхней части загрузите несколько изображений, нажав на кнопку «+».</li>
+        <br>
+        <li data-i18n="instruction2">Счетчик покажет количество выбранных файлов.</li>
+        <br>
+        <li data-i18n="instruction3">Нажмите «Создать Base64 в txt» для генерации файла со всеми изображениями.</li>
+        <br>
+        <li data-i18n="instruction4">В нижней части загрузите созданный .txt файл с Base64 данными.</li>
+        <br>
+        <li data-i18n="instruction5">Нажмите «Расшифровать Base64» для декодирования всех изображений.</li>
+        <br>
+        <li data-i18n="instruction6">Галерея покажет все успешно декодированные изображения.</li>
+        <br>
+        <li data-i18n="instruction7">Используйте «Сбросить» для очистки результатов и начала заново.</li>
+      </ol>
+    </details>
+  </div>
+  
+  <!-- Языковой переключатель -->
+  <div class="lang-container">
+    <button class="lang" id="langRu">🇷🇺</button>
+    <button class="lang active" id="langEn">🇬🇧</button>
+  </div>
+
+  <script>
+    // Language support
+    const translations = {
+      'ru': {
+        'massTitle': '📦 Массовый BASE64',
+        'massDesc': 'Вставьте фото, чтобы создать .txt-файл с base64',
+        'infoMassTitle': '📦 Информатор массового BASE64',
+        'infoMassDesc': 'Загрузите .txt файл с несколькими base64.',
+        'createBase64': 'СОЗДАТЬ БАЗ64 В txt',
+        'decodeBase64': 'РАСШИФРОВАТЬ BASE64',
+        'reset': '🔄 Сбросить',
+        'instructionTitle': 'Инструкция по использованию Массового BASE64',
+        'instruction1': 'В верхней части загрузите несколько изображений, нажав на кнопку «+».',
+        'instruction2': 'Счетчик покажет количество выбранных файлов.',
+        'instruction3': 'Нажмите «Создать Base64 в txt» для генерации файла со всеми изображениями.',
+        'instruction4': 'В нижней части загрузите созданный .txt файл с Base64 данными.',
+        'instruction5': 'Нажмите «Расшифровать Base64» для декодирования всех изображений.',
+        'instruction6': 'Галерея покажет все успешно декодированные изображения.',
+        'instruction7': 'Используйте «Сбросить» для очистки результатов и начала заново.'
+      },
+      'en': {
+        'massTitle': '📦 Mass BASE64',
+        'massDesc': 'Insert photos to create .txt file with base64',
+        'infoMassTitle': '📦 Mass BASE64 Informer',
+        'infoMassDesc': 'Upload .txt file with multiple base64.',
+        'createBase64': 'CREATE BASE64 IN TXT',
+        'decodeBase64': 'DECODE BASE64',
+        'reset': '🔄 Reset',
+        'instructionTitle': 'Mass BASE64 Instructions',
+        'instruction1': 'In the top section, upload multiple images by clicking the «+» button.',
+        'instruction2': 'The counter will show the number of selected files.',
+        'instruction3': 'Click «Create Base64 in txt» to generate a file with all images.',
+        'instruction4': 'In the bottom section, upload the created .txt file with Base64 data.',
+        'instruction5': 'Click «Decode Base64» to decode all images.',
+        'instruction6': 'The gallery will show all successfully decoded images.',
+        'instruction7': 'Use «Reset» to clear results and start over.'
+      }
+    };
+
+    // Language management
+    let currentLang = 'ru';
+
+    function setLanguage(lang) {
+      currentLang = lang;
+      localStorage.setItem('massBase64Lang', lang);
+      
+      // Update active button
+      document.getElementById('langRu').classList.toggle('active', lang === 'ru');
+      document.getElementById('langEn').classList.toggle('active', lang === 'en');
+      
+      // Update all translatable elements
+      document.querySelectorAll('[data-i18n]').forEach(element => {
+        const key = element.getAttribute('data-i18n');
+        if (translations[lang][key]) {
+          element.innerHTML = translations[lang][key];
+        }
+      });
+    }
+
+    // Initialize language
+    document.addEventListener('DOMContentLoaded', () => {
+      const savedLang = localStorage.getItem('massBase64Lang') || 'ru';
+      setLanguage(savedLang);
+      
+      // Language button event listeners
+      document.getElementById('langRu').addEventListener('click', () => setLanguage('ru'));
+      document.getElementById('langEn').addEventListener('click', () => setLanguage('en'));
+    });
+
+    // Оригинальный JavaScript код остается без изменений
+    // Верхняя часть - Siperbase64
+    const fileInput = document.getElementById('file-input');
+    const countDisplay = document.getElementById('count');
+    const generateBtn = document.getElementById('generate-btn');
+    let files = [];
+
+    function updateUI() {
+      countDisplay.textContent = files.length;
+      generateBtn.disabled = files.length === 0;
+    }
+
+    function toBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject('Ошибка чтения файла ' + file.name);
+        reader.readAsDataURL(file);
+      });
+    }
+
+    fileInput.addEventListener('change', () => {
+      files = Array.from(fileInput.files);
+      updateUI();
+    });
+
+    generateBtn.addEventListener('click', async () => {
+      if (files.length === 0) {
+        alert('Вы не вставили ни одного файла!');
+        return;
+      }
+      generateBtn.disabled = true;
+      generateBtn.textContent = 'ГЕНЕРАЦИЯ...';
+
+      try {
+        let result = '';
+        for (const file of files) {
+          const base64 = await toBase64(file);
+          result += `=== ${file.name} ===\n${base64}\n\n`;
+        }
+
+        const blob = new Blob([result], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'massbase64.txt';
+        a.click();
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        alert('Ошибка при генерации: ' + e);
+      } finally {
+        generateBtn.disabled = false;
+        generateBtn.textContent = translations[currentLang]['createBase64'];
+      }
+    });
+
+    updateUI();
+
+    // Нижняя часть - Infomass64
+    const fileInput2 = document.getElementById('file-input2');
+    const statusDiv = document.getElementById('status');
+    const decodeBtn = document.getElementById('decode-btn');
+    const gallery = document.getElementById('gallery');
+    const resetBtn = document.getElementById('reset-btn');
+
+    let fileContent = '';
+
+    fileInput2.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        fileContent = event.target.result;
+        statusDiv.textContent = `📄 Файл "${file.name}" загружен`;
+        statusDiv.style.color = '#000';
+        decodeBtn.disabled = false;
+        
+        previewFileStructure(fileContent);
+      };
+      reader.onerror = () => {
+        statusDiv.textContent = '❌ Ошибка чтения файла';
+        statusDiv.style.color = '#ff4444';
+      };
+      reader.readAsText(file);
+    });
+
+    decodeBtn.addEventListener('click', () => {
+      if (!fileContent) {
+        statusDiv.textContent = '❌ Нет загруженного файла';
+        statusDiv.style.color = '#ff4444';
+        return;
+      }
+
+      decodeBtn.disabled = true;
+      decodeBtn.textContent = 'ОБРАБОТКА...';
+      gallery.innerHTML = '';
+      
+      processMassBase64(fileContent);
+    });
+
+    resetBtn.addEventListener('click', resetAll);
+
+    function previewFileStructure(content) {
+      console.log("=== ПРЕДПРОСМОТР СТРУКТУРЫ ФАЙЛА ===");
+      const lines = content.split('\n');
+      let blockCount = 0;
+      let inBlock = false;
+      
+      lines.forEach((line, index) => {
+        if (line.startsWith('===') && line.includes('===')) {
+          blockCount++;
+          inBlock = true;
+          console.log(`Блок ${blockCount}: ${line.trim()}`);
+        } else if (line.trim() === '' && inBlock) {
+          inBlock = false;
+        } else if (inBlock && line.includes('data:')) {
+          console.log(`  Данные: ${line.substring(0, 50)}...`);
+        }
+      });
+      
+      console.log(`Всего блоков найдено: ${blockCount}`);
+    }
+
+    function processMassBase64(content) {
+      const blocks = [];
+      const lines = content.split('\n');
+      
+      let currentBlock = null;
+      
+      lines.forEach(line => {
+        const trimmedLine = line.trim();
+        
+        if (trimmedLine.startsWith('===') && trimmedLine.includes('===')) {
+          if (currentBlock && currentBlock.data) {
+            blocks.push(currentBlock);
+          }
+          
+          const filename = trimmedLine.replace(/===/g, '').trim();
+          currentBlock = {
+            filename: filename,
+            data: ''
+          };
+        }
+        else if (currentBlock && trimmedLine.startsWith('data:')) {
+          currentBlock.data = trimmedLine;
+        }
+        else if (currentBlock && trimmedLine && !trimmedLine.startsWith('===')) {
+          if (/^[A-Za-z0-9+/=\s]+$/.test(trimmedLine.replace(/\s/g, ''))) {
+            currentBlock.data = `data:image/jpeg;base64,${trimmedLine}`;
+          }
+        }
+      });
+      
+      if (currentBlock && currentBlock.data) {
+        blocks.push(currentBlock);
+      }
+
+      console.log("Найдено блоков:", blocks.length);
+
+      if (blocks.length === 0) {
+        statusDiv.textContent = '❌ Не найдено валидных блоков base64';
+        statusDiv.style.color = '#ff4444';
+        decodeBtn.disabled = false;
+        decodeBtn.textContent = translations[currentLang]['decodeBase64'];
+        return;
+      }
+
+      let validCount = 0;
+      let errorCount = 0;
+      let processedCount = 0;
+
+      blocks.forEach((block, index) => {
+        createImageElement(block.data, block.filename, index);
+      });
+
+      function createImageElement(data, filename, index) {
+        const imageItem = document.createElement('div');
+        imageItem.className = 'image-item';
+        
+        const nameSpan = document.createElement('div');
+        nameSpan.className = 'image-name';
+        nameSpan.textContent = filename || `image_${index + 1}`;
+
+        const debugInfo = document.createElement('div');
+        debugInfo.className = 'debug-info';
+        debugInfo.textContent = `Блок ${index + 1}`;
+
+        if (!data) {
+          const errorDiv = document.createElement('div');
+          errorDiv.className = 'image-error';
+          errorDiv.textContent = '❌ Нет данных';
+          imageItem.appendChild(errorDiv);
+          imageItem.appendChild(nameSpan);
+          imageItem.appendChild(debugInfo);
+          gallery.appendChild(imageItem);
+          errorCount++;
+          updateStatus();
+          return;
+        }
+
+        const img = new Image();
+        
+        const timeoutId = setTimeout(() => {
+          if (!img.complete) {
+            handleError();
+          }
+        }, 3000);
+
+        function handleError() {
+          clearTimeout(timeoutId);
+          const errorDiv = document.createElement('div');
+          errorDiv.className = 'image-error';
+          errorDiv.textContent = '❌ Ошибка декодирования';
+          imageItem.appendChild(errorDiv);
+          imageItem.appendChild(nameSpan);
+          imageItem.appendChild(debugInfo);
+          gallery.appendChild(imageItem);
+          errorCount++;
+          updateStatus();
+        }
+
+        img.onload = () => {
+          clearTimeout(timeoutId);
+          imageItem.appendChild(img);
+          imageItem.appendChild(nameSpan);
+          imageItem.appendChild(debugInfo);
+          gallery.appendChild(imageItem);
+          validCount++;
+          updateStatus();
+        };
+
+        img.onerror = () => {
+          handleError();
+        };
+
+        let src = data;
+        if (!data.startsWith('data:')) {
+          src = `data:image/jpeg;base64,${data}`;
+        }
+        
+        img.src = src;
+      }
+
+      function updateStatus() {
+        processedCount++;
+        
+        if (processedCount === blocks.length) {
+          if (validCount === 0) {
+            statusDiv.textContent = `❌ Все ${blocks.length} блоков содержат ошибки`;
+            statusDiv.style.color = '#ff4444';
+          } else if (errorCount === 0) {
+            statusDiv.textContent = `✅ Все ${validCount} изображений успешно декодированы`;
+            statusDiv.style.color = '#00aa00';
+          } else {
+            statusDiv.textContent = `⚠️ Успешно: ${validCount}, Ошибок: ${errorCount} из ${blocks.length}`;
+            statusDiv.style.color = '#ff8800';
+          }
+          
+          decodeBtn.disabled = false;
+          decodeBtn.textContent = translations[currentLang]['decodeBase64'];
+          resetBtn.style.display = 'block';
+        } else {
+          statusDiv.textContent = `Обработка: ${processedCount}/${blocks.length}`;
+        }
+      }
+    }
+
+    function resetAll() {
+      fileInput2.value = '';
+      fileContent = '';
+      gallery.innerHTML = '';
+      statusDiv.textContent = '';
+      decodeBtn.disabled = true;
+      resetBtn.style.display = 'none';
+    }
+  </script>
+</body>
+</html>
