@@ -1,0 +1,1427 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="HEX Редактор от Asirus - Редактор, где можно напрямую изменить байты файла!" />
+  <meta name="keywords" content="HEX редактор, онлайн hex редактор, редактировать байты, шестнадцатеричный редактор, hex tool, hex editor">
+  <link rel="icon" href="/res/img/favicon.png" type="image/png" size="32x32" />
+  <title>HEX Редактор</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    html, body {
+      width: 100%;
+      min-height: 100vh; 
+      overflow-x: hidden;
+      font-size: 16px; 
+    }
+
+    body {
+      display: block;
+      background: #f0f0f0;
+      padding: 0px; 
+    }
+
+    header {
+      background: #4a76a8;
+      color: #fff;
+      width: 100%;
+      height: 60px; 
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-size: 1.5rem; 
+      font-weight: 600;
+      border-bottom: 2px solid #3a5a80;
+      flex-shrink: 0;
+      margin-bottom: 10px; 
+    }
+
+    main {
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto; 
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 15px; 
+      gap: 12px; 
+      padding-bottom: 120px;
+    }
+
+    .file-input-container {
+      position: relative;
+      display: inline-block;
+      width: 60%;
+      margin: 10px 0;
+    }
+
+    .file-input-button {
+      width: 100%;
+      padding: 10px;
+      background: white;
+      border: 1px dashed #4a76a8;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 1rem;
+      text-align: center;
+      color: #333;
+      pointer-events: none; /* Отключаем события мыши для самой кнопки */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      line-height: 1.2; /* Улучшаем вертикальное выравнивание */
+    }
+
+    .file-input-button:hover {
+      background: #f0f0f0;
+      border-color: #3a5a80;
+    }
+
+    #fileInput {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+    
+    textarea {
+      width: 100%;
+      height: 300px; 
+      resize: none;
+      font-family: 'Fira Code', 'Consolas', monospace;
+      font-size: 14px; 
+      margin: 10px 0; 
+      padding: 12px; 
+      border: 1px solid #ccc; 
+      border-radius: 4px; 
+      background: #fafafa;
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1); 
+      line-height: 1.4; 
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: #4a76a8;
+      box-shadow: inset 0 1px 2px rgba(74, 118, 168, 0.1);
+    }
+
+    .info {
+      margin: 10px 0; 
+      padding: 12px; 
+      background: white;
+      border-radius: 4px; 
+      width: 100%;
+      text-align: center;
+      font-size: 1rem; 
+      border: 1px solid #ddd; 
+      border-left: 4px solid #4a76a8; 
+      line-height: 1.5; 
+    }
+
+    .valid {
+      color: #4caf50;
+      font-weight: bold;
+      font-size: 0.9rem; 
+    }
+
+    .invalid {
+      color: #f44336;
+      font-weight: bold;
+      font-size: 0.9rem;
+    }
+
+    .loading {
+      color: #ff9800;
+      font-weight: bold;
+      font-size: 0.9rem;
+    }
+
+    .extension-info {
+      background: #e3f2fd;
+      border-left: 2px solid #2196f3;
+      padding: 8px 10px;
+      margin: 8px 0;
+      font-size: 0.9rem;
+      border-radius: 3px;
+      line-height: 1.4;
+    }
+
+    .buttons-container {
+      width: 100%;
+      max-width: 900px;
+      padding: 0 15px 15px; 
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(transparent 0%, #f0f0f0 15%);
+      z-index: 100;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 8px; 
+      flex-wrap: wrap;
+      justify-content: center;
+      width: 100%;
+      background: white;
+      padding: 10px; 
+      border: 1px solid #ddd;
+    }
+    
+    .buts {
+      padding: 8px 15px; 
+      background: #4a76a8;
+      color: white;
+      border: 1px solid #3a5a80;
+      border-radius: 4px; 
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 0.9rem; 
+      transition: all 0.15s ease; 
+      white-space: nowrap;
+      flex: 1;
+      min-width: 70px; 
+      max-width: 120px; 
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 36px; 
+    }
+
+    button:hover {
+      background: #3a5a80;
+    }
+
+    button:active {
+      background: #2a4a70;
+    }
+
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    @media (max-width: 768px) {
+      html, body {
+        font-size: 15px;
+      }
+      
+      .buttons {
+        padding: 8px;
+        gap: 6px;
+      }
+      
+      button {
+        flex: 1 0 calc(50% - 6px);
+        min-width: 60px;
+        max-width: calc(50% - 6px);
+        padding: 6px 10px;
+        font-size: 0.85rem;
+        height: 32px;
+      }
+      
+      .buttons-container {
+        padding: 0 12px 12px;
+      }
+      
+      textarea {
+        height: 250px;
+        font-size: 13px;
+      }
+      
+      header {
+        font-size: 1.3rem;
+        height: 55px;
+      }
+      
+      main {
+        padding: 12px;
+        gap: 10px;
+      }
+      
+      .file-input-container {
+        width: 80%;
+      }
+    }
+
+    @media (max-width: 400px) {
+      html, body {
+        font-size: 14px;
+      }
+      
+      button {
+        flex: 1 0 calc(50% - 5px);
+        min-width: 55px;
+        max-width: calc(50% - 5px);
+        padding: 5px 8px;
+        font-size: 0.8rem;
+        height: 30px;
+      }
+      
+      .buttons {
+        gap: 5px;
+        padding: 8px;
+      }
+      
+      textarea {
+        height: 220px;
+        font-size: 12px;
+      }
+      
+      header {
+        font-size: 1.2rem;
+        height: 50px;
+      }
+      
+      .file-input-container {
+        width: 90%;
+      }
+    }
+
+    @media (min-width: 769px) {
+      .buttons {
+        flex-wrap: nowrap;
+      }
+      
+      button {
+        flex: 1;
+        min-width: 70px;
+        max-width: 140px;
+        height: 36px;
+      }
+    }
+
+    .preview-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.2s ease;
+    }
+
+    .preview-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .preview-container {
+      background: white;
+      border-radius: 4px;
+      width: 95%; /* Увеличена ширина */
+      max-width: 800px; /* Увеличен максимальный размер */
+      max-height: 85%; /* Увеличена высота */
+      overflow: hidden;
+      border: 1px solid #ccc;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      background: #4a76a8;
+      color: white;
+      border-bottom: 1px solid #3a5a80;
+    }
+
+    .preview-title {
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+
+    .preview-close {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.3rem;
+      cursor: pointer;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: 50%;
+      transition: background 0.15s ease;
+    }
+
+    .preview-close:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .preview-content {
+      padding: 15px;
+      overflow: auto;
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 400px; /* Минимальная высота для контента */
+    }
+
+    .preview-text {
+      white-space: pre-wrap;
+      font-family: monospace;
+      background: #f8f9fa;
+      padding: 12px;
+      border-radius: 4px;
+      max-height: 500px; /* Увеличена максимальная высота */
+      overflow: auto;
+      width: 100%;
+      font-size: 0.9rem;
+      line-height: 1.4;
+      border: 1px solid #ddd;
+    }
+
+    .preview-image {
+      max-width: 100%;
+      max-height: 500px; /* Увеличена максимальная высота */
+      border-radius: 4px;
+    }
+
+    .preview-video {
+      max-width: 100%;
+      max-height: 500px; /* Увеличена максимальная высота */
+      border-radius: 4px;
+    }
+
+    .preview-audio {
+      width: 100%;
+      margin: 15px 0;
+    }
+
+    .preview-unsupported {
+      padding: 20px;
+      text-align: center;
+      color: #6c757d;
+      font-size: 0.95rem;
+    }
+
+    .preview-controls {
+      display: flex;
+      gap: 10px;
+      padding: 10px 16px;
+      background: #f5f5f5;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .preview-mode-btn {
+      padding: 6px 12px;
+      background: #e9ecef;
+      border: 1px solid #ced4da;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.15s ease;
+    }
+
+    .preview-mode-btn.active {
+      background: #4a76a8;
+      color: white;
+      border-color: #3a5a80;
+    }
+
+    .preview-html-frame {
+      width: 100%;
+      height: 600px; /* Увеличена высота для HTML */
+      border: none;
+      background: white;
+    }
+
+    @supports (padding: max(0px)) {
+      .buttons-container {
+        padding-bottom: max(15px, env(safe-area-inset-bottom));
+      }
+    }
+
+    main {
+      scroll-behavior: smooth;
+    }
+    
+    details ol {
+      padding: 20px;
+    }
+    
+    .lang-container {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      display: flex;
+      gap: 5px;
+      z-index: 101;
+    }
+    
+    .lang {
+      width: 30px;
+      height: 30px;
+      overflow: hidden;
+      font-size: 24px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    
+    .lang:hover {
+      background: #f0f0f0;
+    }
+    
+    .lang.active {
+      border: 2px solid #4a76a8;
+    }
+    
+    hr {
+      width: 90%;
+      border: 0;
+      border-top: 1px solid #ddd;
+      margin: 15px 0;
+    }
+    
+    details {
+      width: 100%;
+      margin: 10px 0;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background: white;
+    }
+    
+    details summary {
+      padding: 12px 15px;
+      cursor: pointer;
+      font-weight: 600;
+      background: #f5f5f5;
+      border-bottom: 1px solid #ddd;
+    }
+    
+    details[open] summary {
+      border-bottom: 1px solid #ddd;
+    }
+    
+    details ol, details ul {
+      padding: 15px 30px;
+    }
+    
+    details li {
+      margin: 8px 0;
+    }
+    
+    .fullscreen-btn {
+      margin: 20px auto;
+      padding: 8px 16px;
+      background: #4a76a8;
+      color: white;
+      border: 1px solid #3a5a80;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 0.9rem;
+      transition: all 0.15s ease;
+      display: block;
+      text-align: center;
+      max-width: 150px;
+    }
+    
+    .fullscreen-btn:hover {
+      background: #3a5a80;
+    }
+    
+    body.fullscreen {
+      padding: 0;
+    }
+    
+    body.fullscreen header {
+      margin-bottom: 0;
+    }
+    
+    body.fullscreen main {
+      max-width: 100%;
+      padding: 10px;
+      padding-bottom: 80px;
+    }
+    
+    body.fullscreen textarea {
+      height: calc(100vh - 200px);
+    }
+    
+    body.fullscreen .buttons-container {
+      max-width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <header data-i18n="title">HEX Editor</header>
+  <main>
+    <div class="file-input-container">
+      <button class="file-input-button" data-i18n="loadFile">Load File</button>
+      <input type="file" id="fileInput">
+    </div>
+    <textarea id="hexArea" placeholder="HEX data..." data-i18n-placeholder="hexPlaceholder"></textarea>
+    <div class="info" id="fileInfo" data-i18n="selectFile">Select a file or enter HEX data</div>
+    <div class="buttons">
+      <button class="buts" id="checkBtn" data-i18n="check">Check</button>
+      <button class="buts" id="previewBtn" data-i18n="preview">Preview</button>
+      <button class="buts" id="downloadBtn" data-i18n="download">Download</button>
+      <button class="buts" id="clearBtn" data-i18n="clear">Clear</button>
+    </div>
+    <hr>
+    <details>
+      <summary><h3 data-i18n="instructionTitle">HEX Editor Instructions</h3></summary>
+      <ol>
+        <li data-i18n="instruction1">Click "Load file" at the top to upload a file.</li>
+        <br>
+        <li data-i18n="instruction2">You will see a field with hexadecimal data.</li>
+        <br>
+        <li data-i18n="instruction3">You can modify bytes in the field, but do not touch the first bytes - without them the file will be marked as invalid.</li>
+        <br>
+        <li data-i18n="instruction4">Click "Check" to determine the file type.</li>
+        <br>
+        <li data-i18n="instruction5">Click "Preview" to preview the file if it's a photo/audio/video.</li>
+        <br>
+        <li data-i18n="instruction8">For HTML files, you can switch between "Text" and "Page" modes in the preview window.</li>
+        <br>
+        <li data-i18n="instruction6">Click "Download" to download the modified file.</li>
+        <br>
+        <li data-i18n="instruction7">Click "Clear" to clear the field of bytes.</li>
+        <br>
+        <li data-i18n="instruction9">Use "Fullscreen Mode" button at the bottom to toggle fullscreen editing.</li>
+      </ol>
+    </details>
+    <details>
+      <summary><h3 data-i18n="purposeTitle">What is a "HEX Editor" for?</h3></summary>
+      <ul>
+        <li data-i18n="purpose1">"HEX Editor" is primarily needed for low-level file editing at the byte level.</li>
+        <br>
+        <li data-i18n="purpose2">In the "HEX Editor" you can get acquainted with bytes for the first time.</li>
+        <br>
+        <li data-i18n="purpose3">This "HEX Editor" has been simplified for better performance. If you need a powerful editor, it is recommended to visit <a href="https://www.sweetscape.com/010editor/?hl=ru-RU">010 editor</a> or <a href="https://hexed.it/">Hexed IT</a>.</li>
+      </ul>
+    </details>
+    
+    <!-- Fullscreen button -->
+    <button class="fullscreen-btn" id="fullscreenBtn" data-i18n="fullscreen">Fullscreen Mode</button>
+  </main>
+  
+  <!-- Language selector -->
+  <div class="lang-container">
+    <button class="lang" id="langRu">🇷🇺</button>
+    <button class="lang active" id="langEn">🇬🇧</button>
+  </div>
+  
+  <!-- Preview window -->
+  <div class="preview-overlay" id="previewOverlay">
+    <div class="preview-container">
+      <div class="preview-header">
+        <div class="preview-title" data-i18n="previewTitle">File Preview</div>
+        <button class="preview-close" id="previewClose">×</button>
+      </div>
+      <div class="preview-controls" id="previewControls" style="display: none;">
+        <button class="preview-mode-btn active" id="previewModeText" data-i18n="previewText">Text</button>
+        <button class="preview-mode-btn" id="previewModePage" data-i18n="previewPage">Page</button>
+      </div>
+      <div class="preview-content" id="previewContent">
+        <div class="preview-unsupported" data-i18n="previewUnavailable">Preview not available</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Language support
+    const translations = {
+      'ru': {
+        'title': 'HEX Редактор',
+        'loadFile': 'Загрузить файл',
+        'hexPlaceholder': 'HEX данные...',
+        'selectFile': 'Выберите файл или введите HEX данные',
+        'check': 'Проверить',
+        'preview': 'Предпросмотр',
+        'download': 'Скачать',
+        'clear': 'Очистить',
+        'instructionTitle': 'Инструкция по работе с HEX Редактором',
+        'instruction1': 'Нажмите «Загрузить файл» сверху, чтобы загрузить файл.',
+        'instruction2': 'Перед вами поле с шестнадцатеричными данным.',
+        'instruction3': 'Вы можете изменять байты в поле, но не трогайте первые байты - без них файл будет помечен невалидным.',
+        'instruction4': 'Нажмите «Проверить» чтобы узнать тип файла.',
+        'instruction5': 'Нажмите «Предпросмотр» чтобы предпросмотреть файл, если он фото/аудио/видео.',
+        'instruction6': 'Нажмите «Скачать» чтобы загрузить изменённый файл.',
+        'instruction7': 'Нажмите «Очистить» чтобы очистить поле от байтов.',
+        'instruction8': 'Для HTML файлов в окне предпросмотра можно переключаться между режимами "Текст" и "Страница".',
+        'instruction9': 'Используйте кнопку "Полноэкранный режим" внизу для переключения полноэкранного редактирования.',
+        'purposeTitle': 'Зачем нужен «HEX редактор»?',
+        'purpose1': '«HEX редактор» в первую очередь нужен для низкоуровнего изменения файлов на уровне байтов.',
+        'purpose2': 'В «HEX редакторе» можно впервые ознакомиться с байтами',
+        'purpose3': 'Данный «HEX редактор» был упрощён для лучшей работы. Если вам нужен мощный редактор, советуется зайти на <a href="https://www.sweetscape.com/010editor/?hl=ru-RU">010 editor</a> или <a href="https://hexed.it/">Hexed IT</a>.',
+        'previewTitle': 'Предпросмотр файла',
+        'previewUnavailable': 'Предпросмотр недоступен',
+        'previewText': 'Текст',
+        'previewPage': 'Страница',
+        'fullscreen': 'Полноэкранный режим',
+        'normalScreen': 'Обычный режим',
+        'loading': 'Загрузка...',
+        'fileLoaded': 'Файл успешно загружен',
+        'originalName': 'Исходное имя',
+        'size': 'Размер',
+        'detectedType': 'Определённый тип',
+        'category': 'Категория',
+        'recommendedExt': 'Рекомендуемое расширение',
+        'noData': 'Нет данных для обработки',
+        'invalidHex': 'Некорректные HEX данные',
+        'unknownType': 'Неизвестный тип файла',
+        'downloadSuccess': 'Файл успешно скачан:',
+        'loadError': 'Ошибка загрузки файла',
+        'fileCharacteristics': 'Характеристики файла',
+        'hexLength': 'Длина HEX данных',
+        'byteCount': 'Количество байт',
+        'fileSignature': 'Сигнатура файла',
+        'mimeType': 'MIME-тип',
+        'fileDescription': 'Описание файла',
+        'validity': 'Валидность',
+        'valid': 'Валидно',
+        'invalid': 'Невалидно',
+        'fileDate': 'Дата файла',
+        'exifData': 'EXIF данные'
+      },
+      'en': {
+        'title': 'HEX Editor',
+        'loadFile': 'Load File',
+        'hexPlaceholder': 'HEX data...',
+        'selectFile': 'Select a file or enter HEX data',
+        'check': 'Check',
+        'preview': 'Preview',
+        'download': 'Download',
+        'clear': 'Clear',
+        'instructionTitle': 'HEX Editor Instructions',
+        'instruction1': 'Click "Load file" at the top to upload a file.',
+        'instruction2': 'You will see a field with hexadecimal data.',
+        'instruction3': 'You can modify bytes in the field, but do not touch the first bytes - without them the file will be marked as invalid.',
+        'instruction4': 'Click "Check" to determine the file type.',
+        'instruction5': 'Click "Preview" to preview the file if it\'s a photo/audio/video.',
+        'instruction6': 'Click "Download" to download the modified file.',
+        'instruction7': 'Click "Clear" to clear the field of bytes.',
+        'instruction8': 'For HTML files, you can switch between "Text" and "Page" modes in the preview window.',
+        'instruction9': 'Use "Fullscreen Mode" button at the bottom to toggle fullscreen editing.',
+        'purposeTitle': 'What is a "HEX Editor" for?',
+        'purpose1': '"HEX Editor" is primarily needed for low-level file editing at the byte level.',
+        'purpose2': 'In the "HEX Editor" you can get acquainted with bytes for the first time.',
+        'purpose3': 'This "HEX Editor" has been simplified for better performance. If you need a powerful editor, it is recommended to visit <a href="https://www.sweetscape.com/010editor/?hl=ru-RU">010 editor</a> or <a href="https://hexed.it/">Hexed IT</a>.',
+        'previewTitle': 'File Preview',
+        'previewUnavailable': 'Preview not available',
+        'previewText': 'Text',
+        'previewPage': 'Page',
+        'fullscreen': 'Fullscreen Mode',
+        'normalScreen': 'Normal Mode',
+        'loading': 'Loading...',
+        'fileLoaded': 'File loaded successfully',
+        'originalName': 'Original name',
+        'size': 'Size',
+        'detectedType': 'Detected type',
+        'category': 'Category',
+        'recommendedExt': 'Recommended extension',
+        'noData': 'No data to process',
+        'invalidHex': 'Invalid HEX data',
+        'unknownType': 'Unknown file type',
+        'downloadSuccess': 'File successfully downloaded:',
+        'loadError': 'Error loading file',
+        'fileCharacteristics': 'File characteristics',
+        'hexLength': 'HEX data length',
+        'byteCount': 'Byte count',
+        'fileSignature': 'File signature',
+        'mimeType': 'MIME type',
+        'fileDescription': 'File description',
+        'validity': 'Validity',
+        'valid': 'Valid',
+        'invalid': 'Invalid',
+        'fileDate': 'File date',
+        'exifData': 'EXIF data'
+      }
+    };
+
+    // Language management
+    let currentLang = 'en';
+
+    function setLanguage(lang) {
+      currentLang = lang;
+      localStorage.setItem('hexEditorLang', lang);
+      
+      // Update active button
+      document.getElementById('langRu').classList.toggle('active', lang === 'ru');
+      document.getElementById('langEn').classList.toggle('active', lang === 'en');
+      
+      // Update all translatable elements
+      document.querySelectorAll('[data-i18n]').forEach(element => {
+        const key = element.getAttribute('data-i18n');
+        if (translations[lang][key]) {
+          element.innerHTML = translations[lang][key];
+        }
+      });
+      
+      // Update placeholders
+      document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
+        const key = element.getAttribute('data-i18n-placeholder');
+        if (translations[lang][key]) {
+          element.placeholder = translations[lang][key];
+        }
+      });
+      
+      // Update fullscreen button text
+      updateFullscreenButtonText();
+    }
+
+    // Initialize language
+    document.addEventListener('DOMContentLoaded', () => {
+      const savedLang = localStorage.getItem('hexEditorLang') || 'en';
+      setLanguage(savedLang);
+      
+      // Language button event listeners
+      document.getElementById('langRu').addEventListener('click', () => setLanguage('ru'));
+      document.getElementById('langEn').addEventListener('click', () => setLanguage('en'));
+    });
+
+    // Основные переменные
+    const fileInput = document.getElementById('fileInput');
+    const hexArea = document.getElementById('hexArea');
+    const fileInfo = document.getElementById('fileInfo');
+    const previewBtn = document.getElementById('previewBtn');
+    const previewOverlay = document.getElementById('previewOverlay');
+    const previewClose = document.getElementById('previewClose');
+    const previewContent = document.getElementById('previewContent');
+    const previewControls = document.getElementById('previewControls');
+    const previewModeText = document.getElementById('previewModeText');
+    const previewModePage = document.getElementById('previewModePage');
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+
+    // Переменные для управления предпросмотром
+    let currentPreviewData = null;
+    let currentPreviewType = null;
+    let currentPreviewMode = 'text';
+    let currentPreviewUrl = null; // Для отслеживания и освобождения URL
+
+    // База сигнатур с расширениями и описаниями
+    const fileSignatures = {
+      // Изображения
+      'FFD8FFE0': { type: 'JPEG (JFIF)', ext: 'jpg', category: 'image', mime: 'image/jpeg', description: 'JPEG Image with JFIF metadata' },
+      'FFD8FFE1': { type: 'JPEG (EXIF)', ext: 'jpg', category: 'image', mime: 'image/jpeg', description: 'JPEG Image with EXIF metadata' },
+      'FFD8FFDB': { type: 'JPEG', ext: 'jpg', category: 'image', mime: 'image/jpeg', description: 'Standard JPEG Image' },
+      '89504E470D0A1A0A': { type: 'PNG', ext: 'png', category: 'image', mime: 'image/png', description: 'Portable Network Graphics Image' },
+      '474946383761': { type: 'GIF87a', ext: 'gif', category: 'image', mime: 'image/gif', description: 'GIF Image (87a format)' },
+      '474946383961': { type: 'GIF89a', ext: 'gif', category: 'image', mime: 'image/gif', description: 'GIF Image (89a format with animations)' },
+      '424D': { type: 'BMP', ext: 'bmp', category: 'image', mime: 'image/bmp', description: 'Bitmap Image File' },
+      '49492A00': { type: 'TIFF (Little Endian)', ext: 'tiff', category: 'image', mime: 'image/tiff', description: 'TIFF Image (Little Endian)' },
+      '4D4D002A': { type: 'TIFF (Big Endian)', ext: 'tiff', category: 'image', mime: 'image/tiff', description: 'TIFF Image (Big Endian)' },
+
+      // Архивы
+      '504B0304': { type: 'ZIP', ext: 'zip', category: 'archive', mime: 'application/zip', description: 'ZIP Archive File' },
+      '526172211A0700': { type: 'RAR v1.5+', ext: 'rar', category: 'archive', mime: 'application/vnd.rar', description: 'RAR Archive File' },
+      '377ABCAF271C': { type: '7-Zip', ext: '7z', category: 'archive', mime: 'application/x-7z-compressed', description: '7-Zip Archive File' },
+
+      // Аудио
+      '494433': { type: 'MP3 (ID3v2)', ext: 'mp3', category: 'audio', mime: 'audio/mpeg', description: 'MP3 Audio with ID3v2 tags' },
+      'FFFB': { type: 'MP3', ext: 'mp3', category: 'audio', mime: 'audio/mpeg', description: 'Standard MP3 Audio File' },
+      '464C4143': { type: 'FLAC', ext: 'flac', category: 'audio', mime: 'audio/flac', description: 'Free Lossless Audio Codec' },
+      '4F676753': { type: 'OGG', ext: 'ogg', category: 'audio', mime: 'audio/ogg', description: 'Ogg Vorbis Audio File' },
+
+      // Видео
+      '66747970': { type: 'MP4/MOV', ext: 'mp4', category: 'video', mime: 'video/mp4', description: 'MP4 Video Container' },
+      '1A45DFA3': { type: 'Matroska/MKV', ext: 'mkv', category: 'video', mime: 'video/x-matroska', description: 'Matroska Video Container' },
+
+      // Документы
+      '25504446': { type: 'PDF', ext: 'pdf', category: 'document', mime: 'application/pdf', description: 'Adobe Portable Document Format' },
+      'D0CF11E0A1B11AE1': { type: 'Microsoft Office (старый)', ext: 'doc', category: 'document', mime: 'application/msword', description: 'Microsoft Office Document (old format)' },
+
+      // Веб-файлы
+      '3C21444F43545950': { type: 'HTML', ext: 'html', category: 'web', mime: 'text/html', description: 'HTML Document with DOCTYPE' },
+      '3C68746D6C': { type: 'HTML', ext: 'html', category: 'web', mime: 'text/html', description: 'HTML Document' },
+      '3C48544D4C': { type: 'HTML', ext: 'html', category: 'web', mime: 'text/html', description: 'HTML Document (uppercase)' },
+      '3C3F786D6C': { type: 'XML', ext: 'xml', category: 'web', mime: 'application/xml', description: 'XML Document' },
+      '7B0D0A': { type: 'JSON', ext: 'json', category: 'web', mime: 'application/json', description: 'JSON Data File' },
+
+      // Исполняемые файлы
+      '4D5A': { type: 'Windows EXE/DLL', ext: 'exe', category: 'executable', mime: 'application/x-msdownload', description: 'Windows Executable or DLL' },
+      '7F454C46': { type: 'Linux ELF', ext: 'elf', category: 'executable', mime: 'application/x-executable', description: 'Linux ELF Executable' }
+    };
+
+    // Получение расширения из имени файла
+    function getFileExtension(filename) {
+      if (!filename) return null;
+      const parts = filename.toLowerCase().split('.');
+      return parts.length > 1 ? parts[parts.length - 1] : null;
+    }
+
+    // Определение типа по расширению файла
+    function getTypeByExtension(ext) {
+      const extMap = {
+        // Изображения
+        'jpg': { type: 'JPEG Image', ext: 'jpg', category: 'image', mime: 'image/jpeg', description: 'JPEG Image File' },
+        'jpeg': { type: 'JPEG Image', ext: 'jpg', category: 'image', mime: 'image/jpeg', description: 'JPEG Image File' },
+        'png': { type: 'PNG Image', ext: 'png', category: 'image', mime: 'image/png', description: 'PNG Image File' },
+        'gif': { type: 'GIF Image', ext: 'gif', category: 'image', mime: 'image/gif', description: 'GIF Image File' },
+        'bmp': { type: 'BMP Image', ext: 'bmp', category: 'image', mime: 'image/bmp', description: 'Bitmap Image File' },
+        'webp': { type: 'WebP Image', ext: 'webp', category: 'image', mime: 'image/webp', description: 'WebP Image File' },
+
+        // Аудио
+        'mp3': { type: 'MP3 Audio', ext: 'mp3', category: 'audio', mime: 'audio/mpeg', description: 'MP3 Audio File' },
+        'wav': { type: 'WAV Audio', ext: 'wav', category: 'audio', mime: 'audio/wav', description: 'WAV Audio File' },
+        'flac': { type: 'FLAC Audio', ext: 'flac', category: 'audio', mime: 'audio/flac', description: 'FLAC Audio File' },
+        'ogg': { type: 'OGG Audio', ext: 'ogg', category: 'audio', mime: 'audio/ogg', description: 'OGG Audio File' },
+
+        // Видео
+        'mp4': { type: 'MP4 Video', ext: 'mp4', category: 'video', mime: 'video/mp4', description: 'MP4 Video File' },
+        'avi': { type: 'AVI Video', ext: 'avi', category: 'video', mime: 'video/x-msvideo', description: 'AVI Video File' },
+        'mkv': { type: 'MKV Video', ext: 'mkv', category: 'video', mime: 'video/x-matroska', description: 'Matroska Video File' },
+        'mov': { type: 'MOV Video', ext: 'mov', category: 'video', mime: 'video/quicktime', description: 'QuickTime Movie File' },
+
+        // Документы
+        'pdf': { type: 'PDF Document', ext: 'pdf', category: 'document', mime: 'application/pdf', description: 'PDF Document' },
+        'doc': { type: 'Word Document', ext: 'doc', category: 'document', mime: 'application/msword', description: 'Microsoft Word Document' },
+        'docx': { type: 'Word Document', ext: 'docx', category: 'document', mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', description: 'Microsoft Word Document (XML)' },
+
+        // Веб-файлы
+        'html': { type: 'HTML Document', ext: 'html', category: 'web', mime: 'text/html', description: 'HTML Web Page' },
+        'htm': { type: 'HTML Document', ext: 'html', category: 'web', mime: 'text/html', description: 'HTML Web Page' },
+        'css': { type: 'CSS Stylesheet', ext: 'css', category: 'web', mime: 'text/css', description: 'CSS Stylesheet' },
+        'js': { type: 'JavaScript', ext: 'js', category: 'web', mime: 'application/javascript', description: 'JavaScript File' },
+        'json': { type: 'JSON Data', ext: 'json', category: 'web', mime: 'application/json', description: 'JSON Data File' },
+
+        // Архивы
+        'zip': { type: 'ZIP Archive', ext: 'zip', category: 'archive', mime: 'application/zip', description: 'ZIP Archive' },
+        'rar': { type: 'RAR Archive', ext: 'rar', category: 'archive', mime: 'application/vnd.rar', description: 'RAR Archive' },
+        '7z': { type: '7-Zip Archive', ext: '7z', category: 'archive', mime: 'application/x-7z-compressed', description: '7-Zip Archive' }
+      };
+
+      return extMap[ext] || null;
+    }
+
+    // Определение типа файла по сигнатуре
+    function detectFileType(hexData) {
+      // Проверяем все сигнатуры от самых длинных к самым коротким
+      const signatures = Object.keys(fileSignatures).sort((a, b) => b.length - a.length);
+      
+      for (const signature of signatures) {
+        if (hexData.toUpperCase().startsWith(signature)) {
+          return fileSignatures[signature];
+        }
+      }
+      
+      return null;
+    }
+
+    // Получение MIME типа по категории
+    function getMimeTypeByCategory(category) {
+      const mimeMap = {
+        'image': 'image/unknown',
+        'audio': 'audio/unknown',
+        'video': 'video/unknown',
+        'document': 'application/octet-stream',
+        'web': 'text/plain',
+        'archive': 'application/octet-stream',
+        'executable': 'application/octet-stream'
+      };
+      return mimeMap[category] || 'application/octet-stream';
+    }
+
+    // Проверка валидности HEX данных
+    function isValidHex(hexData) {
+      // Удаляем пробелы и другие не-HEX символы
+      const cleanHex = hexData.replace(/[^0-9A-Fa-f]/g, '');
+      
+      // Проверяем длину (должна быть четной)
+      if (cleanHex.length === 0) return false;
+      if (cleanHex.length % 2 !== 0) return false;
+      
+      // Проверяем, что все символы являются HEX
+      return /^[0-9A-Fa-f]+$/.test(cleanHex);
+    }
+
+    // Конвертация HEX в ArrayBuffer
+    function hexToArrayBuffer(hexString) {
+      // Очищаем HEX строку
+      const cleanHex = hexString.replace(/[^0-9A-Fa-f]/g, '');
+      
+      // Проверяем длину
+      if (cleanHex.length % 2 !== 0) {
+        throw new Error('Invalid HEX string length');
+      }
+      
+      // Создаем ArrayBuffer
+      const buffer = new ArrayBuffer(cleanHex.length / 2);
+      const view = new Uint8Array(buffer);
+      
+      // Заполняем buffer
+      for (let i = 0; i < cleanHex.length; i += 2) {
+        view[i / 2] = parseInt(cleanHex.substring(i, i + 2), 16);
+      }
+      
+      return buffer;
+    }
+
+    // Конвертация ArrayBuffer в HEX
+    function arrayBufferToHex(buffer) {
+      const view = new Uint8Array(buffer);
+      let hex = '';
+      
+      for (let i = 0; i < view.length; i++) {
+        const byte = view[i].toString(16).padStart(2, '0');
+        hex += byte;
+        // Добавляем пробелы для читаемости
+        if ((i + 1) % 16 === 0) {
+          hex += '\n';
+        } else if ((i + 1) % 2 === 0) {
+          hex += ' ';
+        }
+      }
+      
+      return hex.trim();
+    }
+
+    // Очистка предпросмотра
+    function clearPreview() {
+      // Освобождаем предыдущий URL если он существует
+      if (currentPreviewUrl) {
+        URL.revokeObjectURL(currentPreviewUrl);
+        currentPreviewUrl = null;
+      }
+      
+      // Очищаем содержимое предпросмотра
+      previewContent.innerHTML = '';
+    }
+
+    // Показать предпросмотр
+    function showPreview() {
+      const hexData = hexArea.value.trim();
+      
+      if (!hexData) {
+        fileInfo.innerHTML = `<span class="invalid">${translations[currentLang]['noData']}</span>`;
+        return;
+      }
+      
+      if (!isValidHex(hexData)) {
+        fileInfo.innerHTML = `<span class="invalid">${translations[currentLang]['invalidHex']}</span>`;
+        return;
+      }
+      
+      try {
+        const arrayBuffer = hexToArrayBuffer(hexData);
+        const cleanHex = hexData.replace(/[^0-9A-Fa-f]/g, '');
+        const detectedType = detectFileType(cleanHex);
+        
+        // Очищаем предыдущий предпросмотр
+        clearPreview();
+        
+        currentPreviewData = arrayBuffer;
+        currentPreviewType = detectedType ? detectedType.category : 'unknown';
+        
+        // Показываем или скрываем контролы для HTML файлов
+        if (detectedType && detectedType.category === 'web') {
+          previewControls.style.display = 'flex';
+          currentPreviewMode = 'text';
+          previewModeText.classList.add('active');
+          previewModePage.classList.remove('active');
+        } else {
+          previewControls.style.display = 'none';
+          currentPreviewMode = 'text';
+        }
+        
+        updatePreviewContent();
+        previewOverlay.classList.add('active');
+        
+      } catch (error) {
+        fileInfo.innerHTML = `<span class="invalid">Error: ${error.message}</span>`;
+      }
+    }
+
+    // Обновление содержимого предпросмотра
+    function updatePreviewContent() {
+      if (!currentPreviewData) return;
+      
+      // Очищаем содержимое предпросмотра
+      previewContent.innerHTML = '';
+      
+      try {
+        const cleanHex = hexArea.value.trim().replace(/[^0-9A-Fa-f]/g, '');
+        const detectedType = detectFileType(cleanHex);
+        
+        if (detectedType && detectedType.category === 'web' && currentPreviewMode === 'page') {
+          // Режим страницы для HTML - парсим как HTML
+          const textDecoder = new TextDecoder('utf-8');
+          const textContent = textDecoder.decode(currentPreviewData);
+          
+          const iframe = document.createElement('iframe');
+          iframe.className = 'preview-html-frame';
+          iframe.srcdoc = textContent;
+          previewContent.appendChild(iframe);
+          
+        } else if (detectedType && detectedType.category === 'image') {
+          // Изображения
+          const mimeType = detectedType.mime || 'image/*';
+          const blob = new Blob([currentPreviewData], { type: mimeType });
+          currentPreviewUrl = URL.createObjectURL(blob);
+          
+          const img = document.createElement('img');
+          img.className = 'preview-image';
+          img.src = currentPreviewUrl;
+          previewContent.appendChild(img);
+          
+        } else if (detectedType && detectedType.category === 'audio') {
+          // Аудио
+          const mimeType = detectedType.mime || 'audio/*';
+          const blob = new Blob([currentPreviewData], { type: mimeType });
+          currentPreviewUrl = URL.createObjectURL(blob);
+          
+          const audio = document.createElement('audio');
+          audio.className = 'preview-audio';
+          audio.controls = true;
+          audio.src = currentPreviewUrl;
+          previewContent.appendChild(audio);
+          
+        } else if (detectedType && detectedType.category === 'video') {
+          // Видео
+          const mimeType = detectedType.mime || 'video/*';
+          const blob = new Blob([currentPreviewData], { type: mimeType });
+          currentPreviewUrl = URL.createObjectURL(blob);
+          
+          const video = document.createElement('video');
+          video.className = 'preview-video';
+          video.controls = true;
+          video.src = currentPreviewUrl;
+          previewContent.appendChild(video);
+          
+        } else {
+          // Текстовый режим для всех остальных типов
+          const textDecoder = new TextDecoder('utf-8');
+          let textContent;
+          
+          try {
+            textContent = textDecoder.decode(currentPreviewData);
+          } catch (e) {
+            // Если UTF-8 не работает, пробуем Latin1
+            const latin1Decoder = new TextDecoder('iso-8859-1');
+            textContent = latin1Decoder.decode(currentPreviewData);
+          }
+          
+          const pre = document.createElement('pre');
+          pre.className = 'preview-text';
+          pre.textContent = textContent;
+          previewContent.appendChild(pre);
+        }
+        
+      } catch (error) {
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'preview-unsupported';
+        errorDiv.textContent = translations[currentLang]['previewUnavailable'] || 'Preview not available';
+        previewContent.appendChild(errorDiv);
+      }
+    }
+
+    // Проверка файла с подробными характеристиками
+    function checkFile() {
+      const hexData = hexArea.value.trim();
+      
+      if (!hexData) {
+        fileInfo.innerHTML = `<span class="invalid">${translations[currentLang]['noData']}</span>`;
+        return;
+      }
+      
+      if (!isValidHex(hexData)) {
+        fileInfo.innerHTML = `<span class="invalid">${translations[currentLang]['invalidHex']}</span>`;
+        return;
+      }
+      
+      fileInfo.innerHTML = `<span class="loading">${translations[currentLang]['loading']}</span>`;
+      
+      // Имитация задержки для лучшего UX
+      setTimeout(() => {
+        try {
+          const cleanHex = hexData.replace(/[^0-9A-Fa-f]/g, '');
+          const detectedType = detectFileType(cleanHex);
+          const hexLength = cleanHex.length;
+          const byteCount = hexLength / 2;
+          
+          // Получаем сигнатуру (первые 8 байт)
+          const signature = cleanHex.substring(0, 16).toUpperCase();
+          
+          // Определяем валидность файла
+          const isValid = detectedType !== null;
+          
+          // Получаем текущую дату и время
+          const currentDate = new Date();
+          const fileDate = currentDate.toLocaleString();
+          
+          if (detectedType) {
+            const mimeType = detectedType.mime || getMimeTypeByCategory(detectedType.category);
+            
+            fileInfo.innerHTML = `
+              <span class="valid">${translations[currentLang]['fileLoaded']}</span>
+              <div class="extension-info">
+                <h4>${translations[currentLang]['fileCharacteristics']}</h4>
+                <strong>${translations[currentLang]['detectedType']}:</strong> ${detectedType.type}<br>
+                <strong>${translations[currentLang]['category']}:</strong> ${detectedType.category}<br>
+                <strong>${translations[currentLang]['recommendedExt']}:</strong> .${detectedType.ext}<br>
+                <strong>${translations[currentLang]['mimeType']}:</strong> ${mimeType}<br>
+                <strong>${translations[currentLang]['hexLength']}:</strong> ${hexLength} ${currentLang === 'ru' ? 'символов' : 'characters'}<br>
+                <strong>${translations[currentLang]['byteCount']}:</strong> ${byteCount} ${currentLang === 'ru' ? 'байт' : 'bytes'}<br>
+                <strong>${translations[currentLang]['fileSignature']}:</strong> ${signature}<br>
+                <strong>${translations[currentLang]['fileDescription']}:</strong> ${detectedType.description}<br>
+                <strong>${translations[currentLang]['fileDate']}:</strong> ${fileDate}<br>
+                <strong>${translations[currentLang]['exifData']}:</strong> ${currentLang === 'ru' ? 'Не доступно в этом редакторе' : 'Not available in this editor'}<br>
+                <strong>${translations[currentLang]['validity']}:</strong> <span class="${isValid ? 'valid' : 'invalid'}">${isValid ? translations[currentLang]['valid'] : translations[currentLang]['invalid']}</span>
+              </div>
+            `;
+          } else {
+            const mimeType = getMimeTypeByCategory('unknown');
+            fileInfo.innerHTML = `
+              <span class="valid">${translations[currentLang]['fileLoaded']}</span>
+              <div class="extension-info">
+                <h4>${translations[currentLang]['fileCharacteristics']}</h4>
+                <span class="invalid">${translations[currentLang]['unknownType']}</span><br>
+                <strong>${translations[currentLang]['hexLength']}:</strong> ${hexLength} ${currentLang === 'ru' ? 'символов' : 'characters'}<br>
+                <strong>${translations[currentLang]['byteCount']}:</strong> ${byteCount} ${currentLang === 'ru' ? 'байт' : 'bytes'}<br>
+                <strong>${translations[currentLang]['fileSignature']}:</strong> ${signature}<br>
+                <strong>${translations[currentLang]['mimeType']}:</strong> ${mimeType}<br>
+                <strong>${translations[currentLang]['fileDate']}:</strong> ${fileDate}<br>
+                <strong>${translations[currentLang]['exifData']}:</strong> ${currentLang === 'ru' ? 'Не доступно в этом редакторе' : 'Not available in this editor'}<br>
+                <strong>${translations[currentLang]['validity']}:</strong> <span class="${isValid ? 'valid' : 'invalid'}">${isValid ? translations[currentLang]['valid'] : translations[currentLang]['invalid']}</span>
+              </div>
+            `;
+          }
+        } catch (error) {
+          fileInfo.innerHTML = `<span class="invalid">Error: ${error.message}</span>`;
+        }
+      }, 500);
+    }
+
+    // Скачивание файла
+    function downloadFile() {
+      const hexData = hexArea.value.trim();
+      
+      if (!hexData) {
+        fileInfo.innerHTML = `<span class="invalid">${translations[currentLang]['noData']}</span>`;
+        return;
+      }
+      
+      if (!isValidHex(hexData)) {
+        fileInfo.innerHTML = `<span class="invalid">${translations[currentLang]['invalidHex']}</span>`;
+        return;
+      }
+      
+      try {
+        const arrayBuffer = hexToArrayBuffer(hexData);
+        const cleanHex = hexData.replace(/[^0-9A-Fa-f]/g, '');
+        const detectedType = detectFileType(cleanHex);
+        
+        const extension = detectedType ? detectedType.ext : 'bin';
+        const mimeType = detectedType ? (detectedType.mime || getMimeTypeByCategory(detectedType.category)) : 'application/octet-stream';
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+        const filename = `hex-file-${timestamp}.${extension}`;
+        
+        const blob = new Blob([arrayBuffer], { type: mimeType });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        fileInfo.innerHTML = `<span class="valid">${translations[currentLang]['downloadSuccess']} ${filename}</span>`;
+        
+      } catch (error) {
+        fileInfo.innerHTML = `<span class="invalid">Error: ${error.message}</span>`;
+      }
+    }
+
+    // Очистка поля
+    function clearField() {
+      hexArea.value = '';
+      fileInfo.innerHTML = `<span>${translations[currentLang]['selectFile']}</span>`;
+    }
+
+    // Обновление текста кнопки полноэкранного режима
+    function updateFullscreenButtonText() {
+      if (document.fullscreenElement) {
+        fullscreenBtn.textContent = translations[currentLang]['normalScreen'] || 'Normal Mode';
+      } else {
+        fullscreenBtn.textContent = translations[currentLang]['fullscreen'] || 'Fullscreen Mode';
+      }
+    }
+
+    // Переключение полноэкранного режима
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {
+          console.error(`Error attempting to enable fullscreen: ${err.message}`);
+        });
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    }
+
+    // Обработчики событий
+    fileInput.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      fileInfo.innerHTML = `<span class="loading">${translations[currentLang]['loading']}</span>`;
+      
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const arrayBuffer = e.target.result;
+          const hex = arrayBufferToHex(arrayBuffer);
+          hexArea.value = hex;
+          
+          // Определяем тип по расширению, если не определили по сигнатуре
+          const fileExt = getFileExtension(file.name);
+          const extType = getTypeByExtension(fileExt);
+          const hexData = hex.replace(/[^0-9A-Fa-f]/g, '');
+          const detectedType = detectFileType(hexData) || extType;
+          const hexLength = hexData.length;
+          const byteCount = hexLength / 2;
+          const signature = hexData.substring(0, 16).toUpperCase();
+          
+          // Определяем валидность файла
+          const isValid = detectedType !== null;
+          
+          // Получаем дату файла
+          const fileDate = new Date(file.lastModified).toLocaleString();
+          
+          if (detectedType) {
+            const mimeType = detectedType.mime || getMimeTypeByCategory(detectedType.category);
+            
+            fileInfo.innerHTML = `
+              <span class="valid">${translations[currentLang]['fileLoaded']}</span>
+              <div class="extension-info">
+                <h4>${translations[currentLang]['fileCharacteristics']}</h4>
+                <strong>${translations[currentLang]['originalName']}:</strong> ${file.name}<br>
+                <strong>${translations[currentLang]['detectedType']}:</strong> ${detectedType.type}<br>
+                <strong>${translations[currentLang]['category']}:</strong> ${detectedType.category}<br>
+                <strong>${translations[currentLang]['recommendedExt']}:</strong> .${detectedType.ext}<br>
+                <strong>${translations[currentLang]['mimeType']}:</strong> ${mimeType}<br>
+                <strong>${translations[currentLang]['size']}:</strong> ${file.size} ${currentLang === 'ru' ? 'байт' : 'bytes'}<br>
+                <strong>${translations[currentLang]['hexLength']}:</strong> ${hexLength} ${currentLang === 'ru' ? 'символов' : 'characters'}<br>
+                <strong>${translations[currentLang]['fileSignature']}:</strong> ${signature}<br>
+                <strong>${translations[currentLang]['fileDescription']}:</strong> ${detectedType.description}<br>
+                <strong>${translations[currentLang]['fileDate']}:</strong> ${fileDate}<br>
+                <strong>${translations[currentLang]['exifData']}:</strong> ${currentLang === 'ru' ? 'Не доступно в этом редакторе' : 'Not available in this editor'}<br>
+                <strong>${translations[currentLang]['validity']}:</strong> <span class="${isValid ? 'valid' : 'invalid'}">${isValid ? translations[currentLang]['valid'] : translations[currentLang]['invalid']}</span>
+              </div>
+            `;
+          } else {
+            const mimeType = getMimeTypeByCategory('unknown');
+            fileInfo.innerHTML = `
+              <span class="valid">${translations[currentLang]['fileLoaded']}</span>
+              <div class="extension-info">
+                <h4>${translations[currentLang]['fileCharacteristics']}</h4>
+                <strong>${translations[currentLang]['originalName']}:</strong> ${file.name}<br>
+                <strong>${translations[currentLang]['size']}:</strong> ${file.size} ${currentLang === 'ru' ? 'байт' : 'bytes'}<br>
+                <strong>${translations[currentLang]['hexLength']}:</strong> ${hexLength} ${currentLang === 'ru' ? 'символов' : 'characters'}<br>
+                <strong>${translations[currentLang]['fileSignature']}:</strong> ${signature}<br>
+                <strong>${translations[currentLang]['mimeType']}:</strong> ${mimeType}<br>
+                <strong>${translations[currentLang]['fileDate']}:</strong> ${fileDate}<br>
+                <strong>${translations[currentLang]['exifData']}:</strong> ${currentLang === 'ru' ? 'Не доступно в этом редакторе' : 'Not available in this editor'}<br>
+                <span class="invalid">${translations[currentLang]['unknownType']}</span><br>
+                <strong>${translations[currentLang]['validity']}:</strong> <span class="${isValid ? 'valid' : 'invalid'}">${isValid ? translations[currentLang]['valid'] : translations[currentLang]['invalid']}</span>
+              </div>
+            `;
+          }
+        } catch (error) {
+          fileInfo.innerHTML = `<span class="invalid">Error loading file: ${error.message}</span>`;
+        }
+      };
+      
+      reader.onerror = function() {
+        fileInfo.innerHTML = `<span class="invalid">${translations[currentLang]['loadError']}</span>`;
+      };
+      
+      reader.readAsArrayBuffer(file);
+    });
+
+    // Обработчики кнопок
+    document.getElementById('checkBtn').addEventListener('click', checkFile);
+    document.getElementById('previewBtn').addEventListener('click', showPreview);
+    document.getElementById('downloadBtn').addEventListener('click', downloadFile);
+    document.getElementById('clearBtn').addEventListener('click', clearField);
+    
+    // Закрытие предпросмотра
+    previewClose.addEventListener('click', () => {
+      previewOverlay.classList.remove('active');
+      clearPreview(); // Очищаем предпросмотр при закрытии
+    });
+    
+    // Закрытие предпросмотра по клику вне окна
+    previewOverlay.addEventListener('click', (e) => {
+      if (e.target === previewOverlay) {
+        previewOverlay.classList.remove('active');
+        clearPreview(); // Очищаем предпросмотр при закрытии
+      }
+    });
+    
+    // Переключение режимов предпросмотра
+    previewModeText.addEventListener('click', () => {
+      if (currentPreviewMode !== 'text') {
+        currentPreviewMode = 'text';
+        previewModeText.classList.add('active');
+        previewModePage.classList.remove('active');
+        updatePreviewContent();
+      }
+    });
+    
+    previewModePage.addEventListener('click', () => {
+      if (currentPreviewMode !== 'page') {
+        currentPreviewMode = 'page';
+        previewModePage.classList.add('active');
+        previewModeText.classList.remove('active');
+        updatePreviewContent();
+      }
+    });
+    
+    // Обработчик полноэкранного режима
+    fullscreenBtn.addEventListener('click', toggleFullscreen);
+    
+    // Слушатель изменения полноэкранного режима
+    document.addEventListener('fullscreenchange', () => {
+      if (document.fullscreenElement) {
+        document.body.classList.add('fullscreen');
+      } else {
+        document.body.classList.remove('fullscreen');
+      }
+      updateFullscreenButtonText();
+    });
+
+    // Обработчик нажатия на кнопку загрузки (только в границах)
+    document.querySelector('.file-input-container').addEventListener('click', function(e) {
+      // Проверяем, что клик был именно по контейнеру (а не по дочерним элементам)
+      if (e.target === this) {
+        fileInput.click();
+      }
+    });
+  </script>
+</body>
+</html>
