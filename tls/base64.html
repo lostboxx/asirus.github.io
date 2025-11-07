@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="noindex, follow">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="description" content="Писатель и Информатор: конвертация файлов в Base64 и проверка валидности">
+  <title>Писатель и Информатор</title>
+  <style>
+    body {
+      background: #87CEEB;
+      color: #000;
+      font-family: sans-serif;
+      margin: 0;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+    section {
+      width: 100%;
+      max-width: 500px;
+      margin-bottom: 20px;
+    }
+    h1 {
+      margin: 10px 0 5px;
+      font-size: 20px;
+      text-align: center;
+    }
+    p.subtitle {
+      font-size: 13px;
+      margin-bottom: 10px;
+      text-align: center;
+      color: #222;
+      max-width: 90%;
+    }
+    .uploader {
+      position: relative;
+      width: 80vw; max-width: 240px;
+      height: 80vw; max-height: 240px;
+      border: 2px dashed #555;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; background: #fff; margin-bottom: 10px;
+      user-select: none; border-radius: 12px; overflow: hidden;
+      margin: 0 auto;
+    }
+    .uploader.placeholder::before {
+      content: "+";
+      font-size: 48px; color: #555;
+    }
+    .uploader img, .uploader video, .uploader audio {
+      width: 100%; height: 100%; object-fit: contain; display: block;
+    }
+    input[type="file"] {
+      display: none;
+    }
+    .download-btn {
+      margin-top: 10px; padding: 8px 16px;
+      background: #0cf; color: #000; border: none; border-radius: 6px;
+      cursor: pointer; font-size: 14px; font-weight: bold;
+      display: none;
+    }
+    .file-info {
+      font-size: 12px;
+      margin-top: 5px;
+      color: #444;
+      text-align: center;
+    }
+    hr {
+      width: 100%;
+      max-width: 500px;
+      border: 0;
+      border-top: 2px solid #555;
+      margin: 20px 0;
+    }
+    #extension-input-container {
+      display: none;
+      margin: 10px 0;
+      text-align: center;
+    }
+    #extension-input {
+      padding: 5px;
+      border: 1px solid #555;
+      border-radius: 4px;
+      margin-right: 5px;
+    }
+    #extension-submit {
+      padding: 5px 10px;
+      background: #0077cc;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .status {
+      font-size: 14px;
+      margin-top: 5px;
+      font-weight: bold;
+      text-align: center;
+    }
+    .reset-btn {
+      margin-top: 6px;
+      font-size: 14px;
+      color: #0077cc;
+      cursor: pointer;
+      user-select: none;
+      text-align: center;
+    }
+    h6 {
+      margin: 10px 0;
+      text-align: center;
+      font-weight: normal;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Писатель (Конвертер в Base64) -->
+  <section id="writer-section">
+    <h1>BASE-64 Конвертер</h1>
+    <p class="subtitle">Загрузите фото, видео или аудио для конвертации в Base64</p>  
+    <div id="uploader-writer" class="uploader placeholder" tabindex="0"></div>
+    <input type="file" id="file-input-writer" accept="image/*,video/*,audio/*">
+    <div id="file-info-writer" class="file-info"></div>
+    <button id="download-btn-writer" class="download-btn">Скачать Base64</button>
+    <div id="reset-btn-b64" class="reset-btn" style="display:none;">🔄 Сброс</div>
+    <h6>Используй наш «информатор» чтобы проверить файл на валидность!</h6> 
+  </section>
+
+  <hr>
+
+  <!-- Информатор (Проверка Base64) -->
+  <section id="info-section">
+    <h1>Информатор BASE-64</h1>
+    <p class="subtitle">Загрузите .txt с base64-содержимым (фото, аудио, видео)</p>
+    <div id="uploader-info" class="uploader placeholder" tabindex="0"></div>
+    <input type="file" id="file-input-info" accept=".txt,application/json,image/*">
+    
+    <div id="extension-input-container">
+      <p>Введите расширение файла:</p>
+      <input type="text" id="extension-input" placeholder="jpg, png, mp3...">
+      <button id="extension-submit">Проверить</button>
+    </div>
+    
+    <div id="status" class="status"></div>
+    <div id="reset-btn" class="reset-btn" style="display:none;">🔄 Сброс</div>
+  </section>
+
+  <script>
+    // Общий словарь MIME типов
+    const extensionTypes = {
+      // Изображения
+      'jpg': 'image/jpeg',
+      'jpeg': 'image/jpeg',
+      'png': 'image/png',
+      'gif': 'image/gif',
+      'bmp': 'image/bmp',
+      'webp': 'image/webp',
+      'svg': 'image/svg+xml',
+      'ico': 'image/x-icon',
+      
+      // Аудио
+      'mp3': 'audio/mpeg',
+      'wav': 'audio/wav',
+      'ogg': 'audio/ogg',
+      'aac': 'audio/aac',
+      'flac': 'audio/flac',
+      'm4a': 'audio/mp4',
+      
+      // Видео
+      'mp4': 'video/mp4',
+      'avi': 'video/x-msvideo',
+      'mov': 'video/quicktime',
+      'webm': 'video/webm',
+      'mkv': 'video/x-matroska',
+      'flv': 'video/x-flv',
+      'wmv': 'video/x-ms-wmv',
+      'm4v': 'video/mp4',
+      '3gp': 'video/3gpp'
+    };
+
+    // ========== КОД ДЛЯ ПИСАТЕЛЯ (КОНВЕРТЕР) ==========
+    const uploaderWriter = document.getElementById('uploader-writer');
+    const fileInputWriter = document.getElementById('file-input-writer');
+    const downloadBtnWriter = document.getElementById('download-btn-writer');
+    const fileInfoWriter = document.getElementById('file-info-writer');
+    const resetBtnB64 = document.getElementById('reset-btn-b64');
+    let lastData = '';
+
+    uploaderWriter.addEventListener('click', () => fileInputWriter.click());
+
+    fileInputWriter.addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = () => processWrite(reader.result, file);
+      reader.readAsDataURL(file);
+    });
+
+    downloadBtnWriter.addEventListener('click', () => {
+      if (!lastData) return;
+      
+      const blob = new Blob([lastData], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'base64.txt';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+
+    // Добавляем обработчик для кнопки сброса в разделе "Писатель"
+    resetBtnB64.addEventListener('click', resetWriter);
+
+    function processWrite(dataURL, file) {
+      // Получаем расширение файла
+      const fileName = file.name.toLowerCase();
+      const extension = fileName.split('.').pop();
+      
+      // Получаем MIME тип из словаря
+      const mimeType = extensionTypes[extension];
+      const mediaType = mimeType ? mimeType.split('/')[0] : 'unknown';
+      
+      // Обновляем информацию о файле
+      fileInfoWriter.textContent = `Тип: ${mediaType} | Расширение: ${extension}`;
+
+      // Сохраняем данные
+      lastData = dataURL;
+
+      // Отображаем медиа в зависимости от типа
+      uploaderWriter.innerHTML = '';
+      uploaderWriter.classList.remove('placeholder');
+
+      if (mediaType === 'image') {
+        const img = new Image();
+        img.onload = () => {
+          uploaderWriter.appendChild(img);
+          downloadBtnWriter.style.display = 'block';
+          resetBtnB64.style.display = 'block'; // Показываем кнопку сброса
+        };
+        img.src = dataURL;
+      } else if (mediaType === 'audio') {
+        const audio = document.createElement('audio');
+        audio.controls = true;
+        audio.onloadeddata = () => {
+          uploaderWriter.appendChild(audio);
+          downloadBtnWriter.style.display = 'block';
+          resetBtnB64.style.display = 'block'; // Показываем кнопку сброса
+        };
+        audio.onerror = () => {
+          uploaderWriter.textContent = 'Аудио файл';
+          downloadBtnWriter.style.display = 'block';
+          resetBtnB64.style.display = 'block'; // Показываем кнопку сброса
+        };
+        audio.src = dataURL;
+      } else if (mediaType === 'video') {
+        const video = document.createElement('video');
+        video.controls = true;
+        video.onloadeddata = () => {
+          uploaderWriter.appendChild(video);
+          downloadBtnWriter.style.display = 'block';
+          resetBtnB64.style.display = 'block'; // Показываем кнопку сброса
+        };
+        video.onerror = () => {
+          uploaderWriter.textContent = 'Видео файл';
+          downloadBtnWriter.style.display = 'block';
+          resetBtnB64.style.display = 'block'; // Показываем кнопку сброса
+        };
+        video.src = dataURL;
+      } else {
+        // Для неизвестных типов просто сохраняем данные
+        uploaderWriter.textContent = 'Файл загружен';
+        downloadBtnWriter.style.display = 'block';
+        resetBtnB64.style.display = 'block'; // Показываем кнопку сброса
+      }
+    }
+
+    // Функция сброса для раздела "Писатель"
+    function resetWriter() {
+      uploaderWriter.innerHTML = '';
+      uploaderWriter.classList.add('placeholder');
+      fileInfoWriter.textContent = '';
+      downloadBtnWriter.style.display = 'none';
+      resetBtnB64.style.display = 'none';
+      fileInputWriter.value = '';
+      lastData = '';
+    }
+
+    // ========== КОД ДЛЯ ИНФОРМАТОРА (ПРОВЕРКА) ==========
+    const uploaderInfo = document.getElementById('uploader-info');
+    const fileInputInfo = document.getElementById('file-input-info');
+    const statusDiv = document.getElementById('status');
+    const resetBtn = document.getElementById('reset-btn');
+    const extensionInputContainer = document.getElementById('extension-input-container');
+    const extensionInput = document.getElementById('extension-input');
+    const extensionSubmit = document.getElementById('extension-submit');
+
+    let currentBase64Data = '';
+
+    uploaderInfo.addEventListener('click', () => {
+      fileInputInfo.click();
+      statusDiv.textContent = '';
+      resetBtn.style.display = 'none';
+      extensionInputContainer.style.display = 'none';
+    });
+
+    fileInputInfo.addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const text = reader.result.trim();
+        processCheck(text);
+      };
+      reader.readAsText(file);
+    });
+
+    resetBtn.addEventListener('click', resetAll);
+    
+    extensionSubmit.addEventListener('click', () => {
+      const extension = extensionInput.value.toLowerCase().trim();
+      if (!extension) {
+        statusDiv.textContent = '❌ Введите расширение файла';
+        return;
+      }
+      
+      processWithExtension(extension);
+    });
+
+    function processCheck(data) {
+      currentBase64Data = data;
+      
+      // Если данные уже содержат data: URI схему (любого типа)
+      if (data.startsWith('data:')) {
+        validateAndDisplay(data);
+        return;
+      }
+
+      // Проверим, похоже ли это вообще на base64
+      const isMaybeB64 = /^[A-Za-z0-9+/=\s\r\n]+$/.test(data);
+      if (isMaybeB64) {
+        // Показать поле для ввода расширения
+        extensionInputContainer.style.display = 'block';
+        statusDiv.textContent = '⚠️ Введите расширение файла для проверки';
+      } else {
+        statusDiv.textContent = '❗ Загрузите правильный txt-файл с Base64';
+        resetBtn.style.display = 'block';
+      }
+    }
+
+    function processWithExtension(extension) {
+      const cleanB64 = currentBase64Data.replace(/\s+/g, '');
+      
+      // Получаем MIME тип из словаря
+      const mimeType = extensionTypes[extension];
+      
+      if (mimeType) {
+        const fullDataURI = `data:${mimeType};base64,${cleanB64}`;
+        validateAndDisplay(fullDataURI);
+      } else {
+        statusDiv.textContent = `❌ Неподдерживаемое расширение: ${extension}`;
+      }
+    }
+
+    function validateAndDisplay(dataURI) {
+      // Определяем тип медиа
+      const mediaType = dataURI.split(':')[1].split(';')[0].split('/')[0];
+      
+      switch(mediaType) {
+        case 'image':
+          displayImage(dataURI);
+          break;
+        case 'audio':
+          displayAudio(dataURI);
+          break;
+        case 'video':
+          displayVideo(dataURI);
+          break;
+        default:
+          statusDiv.textContent = '❌ Неподдерживаемый тип медиа';
+          resetBtn.style.display = 'block';
+      }
+    }
+
+    function displayImage(src) {
+      const img = new Image();
+      img.onload = () => {
+        uploaderInfo.innerHTML = ''; 
+        uploaderInfo.classList.remove('placeholder');
+        uploaderInfo.appendChild(img);
+        statusDiv.textContent = '✔️ Изображение валидно. Используй наш «Писатель» чтобы получить base64 файл!';
+        resetBtn.style.display = 'block';
+        extensionInputContainer.style.display = 'none';
+      };
+      img.onerror = () => {
+        statusDiv.textContent = '❌ Повреждённый Base64 (изображение)';
+        resetBtn.style.display = 'block';
+        extensionInputContainer.style.display = 'none';
+      };
+      img.src = src;
+    }
+
+    function displayAudio(src) {
+      const audio = document.createElement('audio');
+      audio.controls = true;
+      
+      audio.onloadeddata = () => {
+        uploaderInfo.innerHTML = ''; 
+        uploaderInfo.classList.remove('placeholder');
+        uploaderInfo.appendChild(audio);
+        statusDiv.textContent = '✔️ Аудио валидно. Используй наш «Писатель» чтобы получить base64 файл!';
+        resetBtn.style.display = 'block';
+        extensionInputContainer.style.display = 'none';
+      };
+      
+      audio.onerror = () => {
+        statusDiv.textContent = '❌ Повреждённый Base64 (аудио)';
+        resetBtn.style.display = 'block';
+        extensionInputContainer.style.display = 'none';
+      };
+      
+      audio.src = src;
+    }
+
+    function displayVideo(src) {
+      const video = document.createElement('video');
+      video.controls = true;
+      
+      video.onloadeddata = () => {
+        uploaderInfo.innerHTML = ''; 
+        uploaderInfo.classList.remove('placeholder');
+        uploaderInfo.appendChild(video);
+        statusDiv.textContent = '✔️ Видео валидно. Используй наш «Писатель» чтобы получить base64 файл!';
+        resetBtn.style.display = 'block';
+        extensionInputContainer.style.display = 'none';
+      };
+      
+      video.onerror = () => {
+        statusDiv.textContent = '❌ Повреждённый Base64 (видео)';
+        resetBtn.style.display = 'block';
+        extensionInputContainer.style.display = 'none';
+      };
+      
+      video.src = src;
+    }
+
+    function resetAll() {
+      uploaderInfo.innerHTML = '';
+      uploaderInfo.classList.add('placeholder');
+      statusDiv.textContent = '';
+      resetBtn.style.display = 'none';
+      extensionInputContainer.style.display = 'none';
+      extensionInput.value = '';
+      currentBase64Data = '';
+      fileInputInfo.value = '';
+    }
+  </script>
+</body>
+</html>
